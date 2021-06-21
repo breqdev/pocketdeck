@@ -10,16 +10,8 @@ project(pocketdeck)
 pico_sdk_init()
 
 # rest of your project
-add_executable(
-    main
-    main.cpp
-)
-
-# Add pico_stdlib library which aggregates commonly used features
-target_link_libraries(main pico_stdlib)
-
-# create map/bin/hex/uf2 file in addition to ELF.
-pico_add_extra_outputs(main)
+include_directories(include)
+add_subdirectory(src)
 
 pico_enable_stdio_usb(main 1)
 pico_enable_stdio_uart(main 0)
