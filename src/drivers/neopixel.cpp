@@ -1,4 +1,4 @@
-#include "neopixel.h"
+#include "drivers/neopixel.h"
 
 
 NeoPixel::NeoPixel(Seesaw& seesaw, uint8_t pin, uint16_t strand_length)

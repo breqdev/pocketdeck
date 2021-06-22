@@ -1,9 +1,9 @@
 #pragma once
 
 #include "main.h"
-#include "seesaw.h"
-#include "neopixel.h"
-#include "keypad.h"
+#include "drivers/seesaw.h"
+#include "drivers/neopixel.h"
+#include "drivers/keypad.h"
 
 
 class Trellis {

@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "main.h"
-#include "trellis.h"
+#include "drivers/trellis.h"
 
 void i2c_setup() {
     i2c_init(FEATHER_I2C, 100 * 1000);

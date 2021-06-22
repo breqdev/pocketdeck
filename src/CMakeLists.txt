@@ -9,6 +9,8 @@ add_executable(
     ${SOURCES}
 )
 
+add_subdirectory(drivers)
+
 # Add pico_stdlib library which aggregates commonly used features
 target_link_libraries(main pico_stdlib hardware_i2c)
 
