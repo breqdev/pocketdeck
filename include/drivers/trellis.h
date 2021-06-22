@@ -8,9 +8,9 @@
 
 class Trellis {
     private:
-        static const int ADDR = 0x2E;
-        static const int NEOPIXEL_PIN = 3;
-        static const int NEOPIXEL_LENGTH = 16;
+        static const uint8_t ADDR = 0x2E;
+        static const uint8_t NEOPIXEL_PIN = 3;
+        static const uint8_t NEOPIXEL_LENGTH = 16;
 
         Seesaw seesaw;
     public:
