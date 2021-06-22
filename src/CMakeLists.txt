@@ -1,8 +1,10 @@
 include(../pico-sdk/pico_sdk_init.cmake)
 
+file(GLOB SOURCES *.cpp)
+
 add_executable(
     main
-    main.cpp
+    ${SOURCES}
 )
 
 # Add pico_stdlib library which aggregates commonly used features

@@ -1,1 +1,11 @@
-#define MESSAGE "Hello World! Project Structure!\n"
+#pragma once
+
+#include "pico/stdlib.h"
+
+#include "pico/binary_info.h"
+#include "hardware/i2c.h"
+
+
+#define FEATHER_I2C i2c1
+#define FEATHER_SDA 2
+#define FEATHER_SCL 3
