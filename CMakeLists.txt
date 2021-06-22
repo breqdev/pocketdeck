@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
+add_definitions(-DCMAKE_EXPORT_COMPILE_COMMANDS=ON)
+
 
 # initialize pico-sdk from submodule
 # note: this must happen before project()
@@ -10,7 +12,6 @@ project(pocketdeck)
 pico_sdk_init()
 
 # rest of your project
-include_directories(include)
 add_subdirectory(src)
 
 pico_enable_stdio_usb(main 1)

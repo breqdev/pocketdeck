@@ -41,7 +41,7 @@ void Seesaw::read(uint8_t module_base, uint8_t module_function, uint8_t* data, s
         false
     );
 
-    sleep_ms(delay);
+    sleep_us(delay);
 
     i2c_read_blocking(
         FEATHER_I2C,

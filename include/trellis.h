@@ -3,6 +3,7 @@
 #include "main.h"
 #include "seesaw.h"
 #include "neopixel.h"
+#include "keypad.h"
 
 
 class Trellis {
@@ -18,4 +19,5 @@ class Trellis {
         void init();
 
         NeoPixel pixels;
+        Keypad keypad;
 };

@@ -28,6 +28,8 @@ void NeoPixel::init() {
 
 
 void NeoPixel::set(uint16_t number, uint8_t r, uint8_t g, uint8_t b) {
+    number *= 3; // each pixel is 3 bytes in the buffer
+
     uint8_t data[] = {(number >> 8), (number & 0xff), g, r, b};
 
     seesaw.write(

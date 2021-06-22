@@ -18,40 +18,60 @@ Trellis trellis;
 int main() {
     stdio_init_all();
 
-    printf("IO OK!\n");
-
     sleep_ms(2000);
-
-    printf("Attempt I2C setup\n");
+    printf("setting up trellis\n");
 
     i2c_setup();
-
-    printf("I2C OK!\n");
-
-    sleep_ms(500);
-
-    printf("Attempt NeoPixel Setup\n");
-
     trellis.init();
 
-    printf("TRELLIS OK!\n");
+    // while (true) {
+    //     trellis.pixels.set(0, 255, 255, 255);
+    //     trellis.pixels.show();
+    //     sleep_ms(500);
+
+    //     trellis.pixels.set(0, 255, 0, 0);
+    //     trellis.pixels.show();
+    //     sleep_ms(500);
+
+    //     trellis.pixels.set(0, 0, 255, 0);
+    //     trellis.pixels.show();
+    //     sleep_ms(500);
+
+    //     trellis.pixels.set(0, 0, 0, 255);
+    //     trellis.pixels.show();
+    //     sleep_ms(500);
+    // }
+
+    sleep_ms(2000);
+    printf("ready!\n");
 
     while (true) {
-        trellis.pixels.set(0, 255, 255, 255);
-        trellis.pixels.show();
-        sleep_ms(500);
+        uint8_t event_count;
+        uint8_t* events = trellis.keypad.events(event_count);
 
-        trellis.pixels.set(0, 255, 0, 0);
-        trellis.pixels.show();
-        sleep_ms(500);
+        for (int i = 0; i < event_count; ++i) {
+            uint8_t event = events[i];
 
-        trellis.pixels.set(0, 0, 255, 0);
-        trellis.pixels.show();
-        sleep_ms(500);
+            uint8_t key = (event >> 2);
+            Keypad::Edge edge = static_cast<Keypad::Edge>(event & 0x03);
 
-        trellis.pixels.set(0, 0, 0, 255);
-        trellis.pixels.show();
-        sleep_ms(500);
+            printf("Event %01d received on key %02d\n", edge, key);
+
+            if (edge == Keypad::RISING) {
+                trellis.pixels.set(key, 255, 255, 255);
+            } else {
+                trellis.pixels.set(key, 0, 0, 0);
+            }
+        }
+
+        if (event_count) {
+            trellis.pixels.show();
+        }
+
+        delete[] events;
+
+        sleep_ms(20);
     }
+
     return 0;
 }
