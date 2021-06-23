@@ -81,9 +81,8 @@ void Display::set_pixel(lv_disp_drv_t* disp_drv, uint8_t* buf, lv_coord_t buf_w,
 }
 
 void Display::round(lv_disp_drv_t* disp_drv, lv_area_t* area) {
-    area->x1 &= ~0x7;
-    area->x2 &= ~0x7;
-    area->x2 += 7;
+    area->x1 = area->x1 & ~0x7;
+    area->x2 = (area->x2 & ~0x7 + 7);
 }
 
 void Display::flush(lv_disp_drv_t* disp_drv, const lv_area_t* area, lv_color_t* color_p) {
@@ -99,13 +98,13 @@ void Display::flush(lv_disp_drv_t* disp_drv, const lv_area_t* area, lv_color_t* 
     uint8_t transfer_size = end_col - start_col;
 
     uint8_t* color_buffer = reinterpret_cast<uint8_t*>(color_p);
-    for (uint8_t page = start_page; page <= end_page; ++page) {
-        send_command(PAGE_ADDR | page);
+    for (uint8_t page_offset = 0; start_page + page_offset <= end_page; ++page_offset) {
+        send_command(PAGE_ADDR | start_page + page_offset);
 
         send_command(COL_ADDR_LOW | start_col_low);
         send_command(COL_ADDR_HIGH | start_col_high);
 
-        uint16_t buffer_index = page * BYTES_PER_PAGE;
+        uint16_t buffer_index = page_offset * BYTES_PER_PAGE;
         uint8_t* data = color_buffer + buffer_index;
 
         send_data(data, transfer_size);
