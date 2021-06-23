@@ -1,30 +1,7 @@
 #include "drivers/display.h"
 
 #include <stdio.h>
-#include <algorithm>
-
-const uint8_t Display::startup[] = {
-    ON_OFF | 0,
-    START_LINE, 0,
-    CONTRAST, 0x2f,
-    ADDRESS_MODE | 0,
-    SEGMENT_REMAP | 0,
-    COM_SCAN_DIR | 0xF,
-    MULTIPLEX, 0x7F,
-    OFFSET, 0x60,
-    INTERNAL_CLOCK, 0x51,
-    DISCHARGE_PRECHARGE, (2) << 4 + (2),
-    VCOM_DESELECT, 0x35,
-    PAGE_ADDR | 0,
-    ENTIRE_DISPLAY_ON | 0,
-    REVERSE | 0,
-    ON_OFF | 1
-};
-
-
-Display::Display() {
-
-}
+#include <cstring>
 
 
 void Display::send_command(uint8_t command) {
@@ -43,7 +20,7 @@ void Display::send_command(uint8_t command) {
 void Display::send_data(const uint8_t* data, size_t length) {
     uint8_t* buffer = new uint8_t[length + 1];
 
-    std::copy(data, data + length, buffer + 1);
+    std::memcpy(buffer + 1, data, length);
     buffer[0] = 0x40;
 
     i2c_write_blocking(
@@ -53,61 +30,86 @@ void Display::send_data(const uint8_t* data, size_t length) {
         length + 1,
         false
     );
+
+    delete[] buffer;
+}
+
+
+bool Display::do_tick(repeating_timer_t* rt) {
+    lv_tick_inc(Display::TICK_INTERVAL);
+    return true;
 }
 
 
 void Display::init() {
     for (uint8_t command : startup) {
-        printf("sending command %02x\n", command);
         send_command(command);
     }
+
+    lv_init();
+
+    lv_disp_draw_buf_init(&disp_buf, buf_1, nullptr, BUFFER_SIZE);
+
+    lv_disp_drv_init(&disp_drv);
+
+    disp_drv.hor_res = WIDTH;
+    disp_drv.ver_res = HEIGHT;
+
+    disp_drv.flush_cb = flush;
+    disp_drv.rounder_cb = round;
+    disp_drv.set_px_cb = set_pixel;
+
+    disp_drv.draw_buf = &disp_buf;
+
+    disp = lv_disp_drv_register(&disp_drv);
 }
 
-void Display::verify_connection() {
-    uint8_t command = 0x80;
-    uint8_t response = 0;
+void Display::set_pixel(lv_disp_drv_t* disp_drv, uint8_t* buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y, lv_color_t color, lv_opa_t opa) {
+    uint16_t page = x >> 3;
+    uint16_t column = y;
+    uint8_t bit = x & 0x7;
 
-    i2c_write_blocking(
-        FEATHER_I2C,
-        ADDR,
-        &command,
-        1,
-        false
-    );
+    uint8_t mask = 1 << bit;
 
-    i2c_read_blocking(
-        FEATHER_I2C,
-        ADDR,
-        &response,
-        1,
-        false
-    );
+    uint16_t buffer_index = (page * BYTES_PER_PAGE) + column;
 
-    printf("response: %08b\n", response);
-}
-
-void Display::flash() {
-    send_command(REVERSE | 1);
-    sleep_ms(100);
-    send_command(REVERSE | 0);
-    sleep_ms(100);
-}
-
-void Display::draw(const uint8_t* bitmap) {
-    uint16_t chunk_size = 16;
-
-    for (int page = 0; page <= (HEIGHT / 8); ++page) {
-        send_command(PAGE_ADDR | page);
-        send_command(COL_ADDR_LOW | 0);
-        send_command(COL_ADDR_HIGH | 0);
-
-        for (int column = 0; column < WIDTH; ++column) {
-            send_command(COL_ADDR_LOW | (column & 0x0F));
-            send_command(COL_ADDR_HIGH | (column >> 4));
-
-            // send_data(bitmap + (page * WIDTH) + column, 1);
-            uint8_t dummy = 0xFF;
-            send_data(&dummy, 1);
-        }
+    if (color.full == 0) {
+        buf[buffer_index] |= mask;
+    } else {
+        buf[buffer_index] &= ~mask;
     }
+}
+
+void Display::round(lv_disp_drv_t* disp_drv, lv_area_t* area) {
+    area->x1 &= ~0x7;
+    area->x2 &= ~0x7;
+    area->x2 += 7;
+}
+
+void Display::flush(lv_disp_drv_t* disp_drv, const lv_area_t* area, lv_color_t* color_p) {
+    uint8_t start_page = area->x1 >> 3;
+    uint8_t end_page = area->x2 >> 3;
+
+    uint8_t start_col = area->y1;
+    uint8_t end_col = area->y2 + 1;
+
+    uint8_t start_col_high = (start_col >> 4) & 0x7;
+    uint8_t start_col_low = start_col & 0xF;
+
+    uint8_t transfer_size = end_col - start_col;
+
+    uint8_t* color_buffer = reinterpret_cast<uint8_t*>(color_p);
+    for (uint8_t page = start_page; page <= end_page; ++page) {
+        send_command(PAGE_ADDR | page);
+
+        send_command(COL_ADDR_LOW | start_col_low);
+        send_command(COL_ADDR_HIGH | start_col_high);
+
+        uint16_t buffer_index = page * BYTES_PER_PAGE;
+        uint8_t* data = color_buffer + buffer_index;
+
+        send_data(data, transfer_size);
+    }
+
+    lv_disp_flush_ready(disp_drv);
 }
